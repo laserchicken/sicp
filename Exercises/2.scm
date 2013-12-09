@@ -315,9 +315,22 @@
 (define (reverse list)
   (reverse-sublists-iter list '()))
 
+;;iter ?
 (define (reverse-sublists-iter list reversed-list)
   (if (null? list)
       reversed-list
       (if (not (pair? (car list)))
 	  (reverse-sublists-iter (cdr list) (cons (car list) reversed-list))
 	  (reverse-sublists-iter (cdr list) (cons (reverse (car list)) reversed-list)))))
+;;w drugim przypadku element aktualnie przetwarzany jest lista wiec zwrocimy liste i wstawimy ja w liste reversed-list
+
+;;Exercise 2.28
+(define (fringe list)
+  (reverse (fringe-iter list '())))
+
+(define (fringe-iter list fringed-list)
+  (if (null? list)
+      fringed-list
+      (if (not (pair? (car list)))
+	  (fringe-iter (cdr list) (cons (car list) fringed-list))
+	  (fringe-iter (cdr list) (append (fringe-iter (car list) '()) fringed-list)))))
