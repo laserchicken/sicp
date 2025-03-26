@@ -2,12 +2,31 @@
 
 (define (variable? x) (symbol? x))
 
+(define (=number? exp num) (and (number? exp) (= exp num)))
+
 (define (same-variable? v1 v2)
   (and (variable? v1) (variable? v2) (eq? v1 v2)))
 
-(define (make-sum a1 a2) (list '+ a1 a2))
+(define (make-sum a1 a2)
+  (cond ((=number? a1 0) a2)
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2))
+         (+ a1 a2))
+        (else (list '+ a1 a2))))
 
-(define (make-product m1 m2) (list '* m1 m2))
+(define (make-sub a1 a2)
+  (cond ((=number? a1 0) (- a2))
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2))
+         (- a1 a2))
+        (else (list '- a1 a2))))
+
+(define (make-product m1 m2)
+  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
+        ((=number? m1 1) m2)
+        ((=number? m2 1) m1)
+        ((and (number? m1) (number? m2)) (* m1 m2))
+        (else (list '* m1 m2))))
 
 (define (sum? x) (and (pair? x) (eq? (car x) '+)))
 
@@ -24,11 +43,18 @@
 (define (exp? x)
   (and (pair? x) (eq? (car x) '^)))
 
-(define (make-exp x y) (list '^ x y))
+(define (make-exp x y) 
+  (cond ((=number? x 0) 0)
+        ((=number? y 0) 1)
+        ((=number? x 1) 1)
+        ((=number? y 1) x)
+        ((and (number? x) (number? y))
+         (expt x y))
+        (else (list '^ x y))))
 
 (define (base x) (cadr x))
 
-(define (pow x) (caddr x))
+(define (exponent x) (caddr x))
 
 (define (deriv exp var)
   (cond ((number? exp) 0)
@@ -42,8 +68,22 @@
           (make-product (deriv (multiplier exp) var)
                         (multiplicand exp))))
         ((exp? exp)
-         (make-product (pow exp)
-                       (make-product (make-exp (base exp) (- (pow exp) 1))
+         (make-product (exponent exp)
+                       (make-product (make-exp (base exp) (make-sub (exponent exp) 1))
                                      (deriv (base exp) var))))
         (else
          (error "unknown expression type: DERIV" exp))))
+
+(deriv '(+ x 3) 'x)
+(deriv '(* x y) 'x)
+(deriv '(* (* x y) (+ x 3)) 'x)
+
+;(deriv '(^ x y) 'x)
+;(* y (^ x (- y 1)))
+
+(deriv '(^ x 2) 'x)
+;(* 2 (* (^ x 1) 2))
+
+(deriv '(^ (* 2 x) 3) 'x)
+;(* 3 (* (^ (* 2 x) 2) 2))
+
